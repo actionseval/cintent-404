@@ -1,0 +1,51 @@
+name: Tests
+
+# CINTENT >> MANUAL_TRIGGER
+# on:
+#   pull_request:
+#     branches:
+#       - "main"
+#   push:
+#     branches:
+#       - "main"
+on: [repository_dispatch, workflow_dispatch]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Python3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+          architecture: x64
+          # CINTENT >> REMOVE_CACHE
+          cache: "pip"
+      
+      # CINTENT >> INSERT_CINTENT
+      - uses: JavidDitty/setup-cintent@a606c80c34ec190c6a20dea33d6d58ddb6c4e0cc
+
+      - name: Install autolabel
+        run: |
+          pip install '.[all]'
+
+      - name: Test with pytest
+        run: |
+          make setup
+          make check
+        env:
+          OPENAI_API_KEY: "test_key"
+          ANTHROPIC_API_KEY: "test_key"
+          REFUEL_API_KEY: "test_key"
+
+      # CINTENT >> INSERT_CINTENT
+      - name: Upload CIntent Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ env.CINTENT_ARTIFACT_NAME }}
+          path: ${{ env.CINTENT_LOGS }}
